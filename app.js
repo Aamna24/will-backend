@@ -5,7 +5,10 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var mongoose = require('mongoose')
 const cors = require("cors");
+const dotenv = require('dotenv')
+dotenv.config()
 
+console.log('NODE_ENV: ' + config.util.getEnv('NODE_ENV'));
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var balanceRouter = require('./routes/balanceReq');
@@ -13,7 +16,7 @@ var flyerRouter = require('./routes/flyer')
 var willRouter = require('./routes/basicWill')
 
 var app = express();
-const port = 61550;
+const port = process.env.PORT || 61550;
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
