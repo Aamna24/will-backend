@@ -14,7 +14,7 @@ const will = mongoose.Schema({
     requesterTown: {type:String, required: true},
     requesterCountry: {type:String, required: true},
     requesterPostCode: {type:String, required: true},
-    promotionCode: {type:String, required: true},
+    promotionCode: {type:String},
     requesterSelfie: {type:String, required: true},
     willStatus:{type:String, required: true},
     willOwnerTitle: {type:String, required: true},
@@ -38,7 +38,7 @@ const will = mongoose.Schema({
     executorAddLine2: {type:String},
     executorCity: {type:String},
     executorCountry: {type:String},
-    dateOfWill: {type:String, required: true},
+
     storedWillAdd: {type:String, required: true},
     additionalIns: {type:String, required: true},
     willReminderFr: {type:String},
