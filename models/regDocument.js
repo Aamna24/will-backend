@@ -8,7 +8,8 @@ const regDoc = mongoose.Schema({
    docType:{type:String, required: true},
    docNo:{type: String, required: true},
    docDesc:{type:String, required: true},
-   docLoc:{type:String, required: true}
+   docLoc:{type:String, required: true},
+   issuer:{type:String, required: true}
    
   });
   

@@ -1,9 +1,8 @@
 const mongoose = require("mongoose");
 
-const user = mongoose.Schema({
+const disabledUsers = mongoose.Schema({
   
   type: {type:String, required: true},
-  name:{type:String, required: true},
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   selfie :{type: String, required: true},
@@ -18,4 +17,4 @@ const user = mongoose.Schema({
  
 });
 
-module.exports = mongoose.model("Users", user);
+module.exports = mongoose.model("disabledUsers", disabledUsers);

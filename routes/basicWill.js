@@ -168,6 +168,10 @@ route.get("/", async (req, res) => {
     }
   });
 
+// store basic result search
+route.post("/search/",async(req,res)=>{
+  
+})
 
 // search basic will
 route.get("/details/:id", async(req,res)=>{
