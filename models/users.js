@@ -12,9 +12,10 @@ const user = mongoose.Schema({
   add2:{type:String},
   town:{type:String, required: true},
   country:{type: String, required: true},
-  //status:{type:String, required: true},
   isAdmin:{type:Boolean, required: true},
-  status:{type:String}
+  status:{type:String},
+  code:{type:String}
+
  
 });
 

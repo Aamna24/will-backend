@@ -7,10 +7,10 @@ const Search = mongoose.Schema({
     ambCode:{type:String},
     discountAmount:{type: Number},
     amountPaid:{type:Number, required: true},
-    matchedID:{type:String},
-    willRegNo:{type:String,required: true},
-    nameOfWillOwner:{type:String, required: true},
-    willOwnerPh:{type:String, required: true},
+    matchedID:{type:String, required: true},
+    willRegNo:{type:String},
+    nameOfWillOwner:{type:String},
+    willOwnerPh:{type:String},
     willOwnerDob:{type:String},
     relationship:{type:String, required: true},
     reasons:{type:String, required: true},
@@ -27,7 +27,7 @@ const Search = mongoose.Schema({
     reqCountry: {type:String, required: true},
     reqPostCode: {type:String, required: true},
     promotionCode: {type:String, required: true},
-    requesterSelfie: {type:String, required: true}
+   reqSelfie: {type:String, required: true}
    
    
   });

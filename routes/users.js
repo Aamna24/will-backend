@@ -12,6 +12,7 @@ const Discount = require("../models/discount")
 const Invoice = require("../models/invoice")
 var voucher_codes = require('voucher-code-generator');
 const moment = require('moment')
+const Commission = require('../models/commission')
 
 var cloudinary = require('cloudinary').v2;
 const multer = require("multer");
@@ -90,7 +91,7 @@ route.post("/login", async (req, res) => {
     else{
     if (getUser.length > 0 ) {
       let token = jwt.sign({ id: getUser[0]._id, name: getUser[0].name,email: getUser[0].email,
-        isAdmin: getUser[0].isAdmin }, "secret_key");
+        isAdmin: getUser[0].isAdmin , type: getUser[0].type, code:getUser[0].code}, "secret_key");
       res
         .header("auth-token", token)
         .status(200)
@@ -122,6 +123,10 @@ route.post("/register/:role", upload.single('selfie'), async (req, res) => {
   const {role} = req.params
   const path = req.file && req.file.path
   const uniqueFileName = phoneNo
+  const code = voucher_codes.generate({
+    length: 5,
+    count: 1,
+  });
   try{
     const image = await cloudinary.uploader.upload(path, {
       public_id: `selfie/${uniqueFileName}`,
@@ -142,7 +147,8 @@ route.post("/register/:role", upload.single('selfie'), async (req, res) => {
         selfie: image && image.url,  
         type: role,
         isAdmin: false,
-        status: "Active"
+        status: "Active",
+        code: code[0]
       });
       const response = await newUser.save();
       if(response){
@@ -524,4 +530,67 @@ route.patch("/invoice/:id",async(req,res)=>{
     });
   }
 })
+
+
+// add commission
+route.post("/generate-commission",async(req,res)=>{
+  const { willAmbID, userID , commissionEarned, commissionBalance, productName, userName} = req.body
+ 
+  const newCommission = new Commission({
+  
+    date: moment().format('LL'),
+    willAmbID: willAmbID,
+    userID: userID,
+    commissionEarned: commissionEarned,
+    commissionBalance: commissionBalance,
+    commissionStatus: "Unpaid",
+    balanceReq:"",
+    productName: productName,
+    userName: userName
+    
+  })
+  newCommission
+  .save()
+  .then(response => {
+    res.status(200).send({
+      success: true,
+      message: "Commission Added",
+      data: response
+    });
+  })
+  .catch(err => {
+    res.status(400).send({
+      success: false,
+      message: "Error: failed",
+      Error: err
+    });
+  });  
+})
+
+// get commission listing
+route.get("/commission/:id", async(req,res)=>{
+  const {id} = req.params
+  try {
+    const products = await Commission.find({willAmbID: id});
+    if (products.length === 0) {
+      res.status(200).send({
+        success: true,
+        data: products,
+        message: "No commission to show"
+      });
+    } else {
+      res.status(200).send({
+        success: true,
+        data: products
+      });
+    }
+  } catch (err) {
+    res.status(503).send({
+      success: false,
+      message: "Server error"
+    });
+  }
+
+}
+)
 module.exports = route;

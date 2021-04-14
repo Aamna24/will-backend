@@ -136,7 +136,7 @@ route.delete("/delete/:id", async(req,res)=>{
 
 
 // covert to pdf 
-route.get("/convert/:filename", (req,res)=>{
+route.get("/convert", (req,res)=>{
   const {filename} = req.query
   console.log(filename)
   const inputPath = path.resolve(__dirname,`./files/${filename}`);
@@ -147,6 +147,7 @@ route.get("/convert/:filename", (req,res)=>{
     await pdfdoc.initSecurityHandler();
     await PDFNet.Convert.toPdf(pdfdoc, inputPath)
     pdfdoc.save(outputPath,PDFNet.SDFDoc.SaveOptions.e_linearized)
+ 
   }
 
   PDFNet.runWithCleanup(convertToPDF).then(()=>{
@@ -181,7 +182,7 @@ route.get("/generate",(req,res)=>{
     return pdfdoc.save(outputPath,PDFNet.SDFDoc.SaveOptions.e_linearized);
   }
   PDFNet.runWithCleanup(replaceText).then(()=>{
-    fs.readFile((outputPath,[err,data])=>{
+    fs.readFile(outputPath,(err,data)=>{
    if (err){
      res.statusCode=500;
      res.end(err)

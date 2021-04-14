@@ -38,7 +38,6 @@ const will = mongoose.Schema({
     executorAddLine2: {type:String},
     executorCity: {type:String},
     executorCountry: {type:String},
-
     storedWillAdd: {type:String, required: true},
     additionalIns: {type:String, required: true},
     willReminderFr: {type:String},
@@ -47,7 +46,11 @@ const will = mongoose.Schema({
     createdWillPDF: {type:String},
     discountCode: {type:String},
     discountAmount: {type:String},
-    dateCreated:{type:String}
+    dateCreated:{type:String},
+    willSource:{type:String},
+    createdBy:{type:String},
+    willRefNo:{type: Number},
+    willStorageRefNo:{type:Number},
   });
   
   module.exports = mongoose.model("will", will);

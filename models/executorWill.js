@@ -4,23 +4,19 @@ const ExecWill = mongoose.Schema({
 
     date: {type:String, required: true},
     matchedID:{type:String},
-    email:{type:String, required: true},
-    reqTitle:{type:String, required: true},
-    reqFname: {type:String, required: true},
-    reqMname: {type:String},
-    reqLname: {type:String, required: true},
-    reqAdd: {type:String, required: true},
-    reqEmail: {type:String, required: true},
-    reqPhNo: {type:String, required: true},
-    reqAddLine1: {type:String, required: true},
-    reqAddLine2: {type:String},
-    reqTown: {type:String, required: true},
-    reqCountry: {type:String, required: true},
-    reqPostCode: {type:String, required: true},
+    willOwnerName:{type:String},
+    willOwnerDOB:{type:String},
+    willOwnerPhNo:{type:String},
+    execName: {type:String, required: true},
+    execEmail: {type:String, required: true},
+    execPhNo: {type:Number, required: true},
+    relationship: {type:String, required: true},
+    reasons: {type:String, required: true},
     promotionCode: {type:String, required: true},
     requesterSelfie: {type:String, required: true},
     discountApplied:{type:Number, required: true},
-    amountPaid:{type:Number, required: true}
+    amountPaid:{type:Number, required: true},
+    willRefNo:{type:String}
    
    
   });
