@@ -6,9 +6,10 @@ const discount = mongoose.Schema({
     type: {type:String, required: true},
     fromNoQty:{type: Number},
     toNoQty:{type:Number},
-    discountPercentage:{type: Number, required: true},
-    commissionPercentage:{type:Number, required: true},
-    discountCode:{type:String, required: true}
+    discountPercentage:{type: Number},
+    commissionPercentage:{type:Number},
+    discountCode:{type:String, required: true},
+    amount:{type:Number}
    
    
   });

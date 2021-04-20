@@ -3,13 +3,15 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
-var mongoose = require('mongoose')
 const cors = require("cors");
 const config = require("config");
 const dotenv = require('dotenv')
 dotenv.config()
+const connectDB = require('./config/db')
 
+connectDB();
 console.log('NODE_ENV: ' + config.util.getEnv('NODE_ENV'));
+
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var balanceRouter = require('./routes/balanceReq');
@@ -18,6 +20,7 @@ var willRouter = require('./routes/basicWill')
 
 var app = express();
 const port = process.env.PORT || 61550;
+
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
@@ -50,13 +53,7 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
-mongoose
-  .connect("mongodb+srv://aamna:aamna@cluster0.z9eyp.mongodb.net/will?retryWrites=true&w=majority", {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-  })
-  .then(success => console.log("Successfully connected to database"))
-  .catch(err => console.log("Error while connecting to database"));
+
 
 app.listen(port, () => console.log(`App listening on port : ${port}`));
 module.exports = app;

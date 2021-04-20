@@ -24,5 +24,8 @@
     "underscore": "^1.13.0",
     "voucher-code-generator": "^1.1.1",
     "xhr2": "^0.2.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.7"
   }
 }

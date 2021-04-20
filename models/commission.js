@@ -10,7 +10,8 @@ const Commission = mongoose.Schema({
     commissionBalance:{type:String},
     willAmbID :{type:String},
     commissionStatus:{type:String},
-    productName:{type:String}
+    productName:{type:String},
+    salesID:{type:String}
    
    
   });

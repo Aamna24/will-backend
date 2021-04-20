@@ -3,14 +3,14 @@ const mongoose= require("mongoose")
 const balanceRequest = mongoose.Schema({
     
     reqDate: { type: String, required: true },
-   // img:{type: String, required: true},
     reqStatus: {type:String, required: true},
+    userName:{type:String},
+    bankName:{type:String},
+    bankAccountName:{type:String},
+    bankAccNo:{type:String},
+    commissionBalance:{type:Number}
    
-    user_id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Users',
-        required: true
-    }
+   
    
   });
   

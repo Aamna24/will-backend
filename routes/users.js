@@ -2,7 +2,6 @@ var express = require('express');
 var route = express.Router();
 const mongoose = require("mongoose");
 const User = require("../models/users");
-const DisableUsers = require("../models/disabledUsers")
 const Products = require('../models/products')
 const Vouchers = require('../models/voucher')
 const Document = require("../models/regDocument")
@@ -13,10 +12,12 @@ const Invoice = require("../models/invoice")
 var voucher_codes = require('voucher-code-generator');
 const moment = require('moment')
 const Commission = require('../models/commission')
-
+const BalanceReq = require('../models/balanceRequest');
+const Sales = require('../models/sales')
 var cloudinary = require('cloudinary').v2;
 const multer = require("multer");
 var fs = require('fs');
+const transactions = require('../models/transactions');
 
 
 cloudinary.config({ 
@@ -83,7 +84,7 @@ route.post("/login", async (req, res) => {
     });
 
     if(getUser[0].status==="Disable"){
-      res.status(404).send({
+      res.status(400).send({
         success: false,
         message: "User is disabled!"
       });
@@ -221,7 +222,7 @@ route.post("/register-document", async(req,res)=>{
 
 // setup discount
 route.post("/setup-discount", async(req,res)=>{
-  const{type, fromNoQty, toNoQty, discountPercentage,commissionPercentage} = req.body;
+  const{type, fromNoQty, toNoQty, discountPercentage,commissionPercentage,amount} = req.body;
   const code = voucher_codes.generate({
     length: 8,
     count: 1,
@@ -234,7 +235,8 @@ route.post("/setup-discount", async(req,res)=>{
     toNoQty,
     discountPercentage,
     commissionPercentage,
-    discountCode: code[0]
+    discountCode: code[0],
+    amount
   })
   newDiscount
   .save()
@@ -280,35 +282,54 @@ route.get("/discounts", async(req,res)=>{
 
 }
 )
-// diable users
-route.post("/disable/:id", async(req,res)=>{
+// disable users
+route.patch("/disable/:id", async(req,res)=>{
   const {id} = req.params
-  const user = await User.updateOne({_id: id},{$set:{ status:"Disable"}})
+ 
+  try {
+    const result = await User.updateOne({_id: id},{$set:{ status:"Disable"}})
+    if (result.length === 0) {
+      res.status(200).send({
+        success: true,
+        data: result,
+        message: "No User disabled"
+      });
+    } else {
+      res.status(200).send({
+        success: true,
+        data: result
+      });
+    }
+    
+  } catch (error) {
+    res.status(503).send({
+      success: false,
+      message: "Server error"
+    });
+  }
 })
+
 
 // generate vouchers
 route.post("/vouchers",async(req,res)=>{
-  const {userID, discountID,paymentNumber,quantity} = req.body
+  const {userid, paymentNumber,b2bClient, invoiceID} = req.body
+
   const codes = voucher_codes.generate({
     length: 8,
     count: 1
 
 });
-const invoice = voucher_codes.generate({
-  length: 4,
-  count: 1,
-  charset: "0123456789"
 
-});
 const newVoucher = new Vouchers({
   date: moment().format('LL') ,
-  userID,
-  discountID,
+  userID: userid,
   voucherCode: codes[0],
-  voucherStatus:"Not Used",
-  paymentNumber,
-  quantity: quantity,
-  invoiceID: invoice[0]
+  status:"Not Used",
+  paymentNumber:paymentNumber,
+  invoiceID: invoiceID,
+  b2bClient: b2bClient,
+  emailTo:""
+
 })
 newVoucher
 .save()
@@ -325,11 +346,51 @@ newVoucher
     message: "Voucher creation failed",
     Error: err
   });
-});
 
+});
 
 })
 
+// post transaction 
+route.post("/transaction",async(req,res)=>{
+  const {userid, discountID,paymentNumber,quantity,b2bClient,processedBy,amount} = req.body
+  const invoice = voucher_codes.generate({
+    length: 5,
+    count: 1,
+    charset: "0123456789"
+  
+  });
+  
+const newTransaction = new transactions({
+  date: moment().format('LL') ,
+  userID: userid,
+  discountID,
+  paymentNumber:paymentNumber,
+  quantity: quantity,
+  invoiceID: invoice[0],
+  b2bClient: b2bClient,
+  amount: amount,
+  processedBy: processedBy,
+})
+newTransaction
+.save()
+.then(response => {
+  res.status(200).send({
+    success: true,
+    message: "Transaction Added",
+    data: response
+  });
+})
+.catch(err => {
+  res.status(400).send({
+    success: false,
+    message: "Transaction failed",
+    Error: err
+  });
+
+});
+
+})
 // get specific voucher detail
 route.get("/voucherdetail/:id", async(req,res)=>{
   const {id} = req.params;
@@ -382,6 +443,34 @@ route.get("/voucherslist", async(req,res)=>{
 }
 )
 
+
+// get b2b voucher transactions
+// get vouchers listing
+route.get("/transactionlist", async(req,res)=>{
+  try {
+    const transaction = await transactions.find();
+    if (transaction.length === 0) {
+      res.status(200).send({
+        success: true,
+        data: transaction,
+        message: "No transaction to show"
+      });
+    } else {
+      res.status(200).send({
+        success: true,
+        data: transaction
+      });
+    }
+  } catch (err) {
+    res.status(503).send({
+      success: false,
+      message: "Server error"
+    });
+  }
+
+}
+)
+
 // add products
 route.post("/addproduct",async(req,res)=>{
   const {name, basePrice} = req.body
@@ -411,6 +500,40 @@ newProduct
 
 })
 
+// update pricing of products
+// update will reg after payment 
+route.patch("/updateproduct", async(req,res)=>{
+  var {product, amount} = req.body;
+  console.log(req.body)
+  
+  try {
+    const result = await Products.updateOne({
+      name: product
+    }, {$set:{
+      basePrice :amount
+    }})
+    if (result.length === 0) {
+      res.status(200).send({
+        success: true,
+        data: result,
+        message: "No Product Updated"
+      });
+    } else {
+      res.status(200).send({
+        success: true,
+        data: result
+      });
+    }
+    
+  } catch (error) {
+    res.status(503).send({
+      success: false,
+      message: "Server error"
+    });
+  }
+})
+
+
 // get products listing
 route.get("/products", async(req,res)=>{
   try {
@@ -438,23 +561,28 @@ route.get("/products", async(req,res)=>{
 )
 
 // invoice generation by admin
-route.post("/generate-invoice",async(req,res)=>{
+/*route.post("/generate-invoice",async(req,res)=>{
   const { b2bClient, noOfVoucher , amount, processedBy} = req.body
   console.log(req.body)
   const codes = voucher_codes.generate({
-    length: 5,
+    length: 4,
     count: 1,
     charset: "0123456789"
 });
+const codes1 = voucher_codes.generate({
+  length: 8,
+  count: 1,
+});
   const newInvoice = new Invoice({
-    number: codes[0],
+    invoiceID: codes[0],
     date: moment().format('LL'),
     b2bClient: b2bClient,
     amount: amount,
     processedBy: processedBy,
-    noOfVoucher: noOfVoucher,
-    status: "Unpaid",
+    quantity: noOfVoucher,
+    status: "Not Used",
     paymentID:"",
+    voucherCode: codes1[0]
     
   })
   newInvoice
@@ -476,7 +604,7 @@ route.post("/generate-invoice",async(req,res)=>{
 })
 
 // get invoice listing 
-route.get("/invoice",async(req,res)=>{
+/*route.get("/invoice",async(req,res)=>{
   try {
     const invoice = await Invoice.find();
     if (invoice.length === 0) {
@@ -498,43 +626,11 @@ route.get("/invoice",async(req,res)=>{
     });
   }
 })
-
-//update invoice status
-route.patch("/invoice/:id",async(req,res)=>{
-  const {id} = req.params
-  var {paymentID} = req.body;
-  try {
-    const result = await Invoice.updateOne({
-      number: id
-    }, {$set:{
-      paymentID: paymentID,
-      status:"Paid"
-    }})
-    if (result.length === 0) {
-      res.status(200).send({
-        success: true,
-        data: result,
-        message: "No Invoice Updated"
-      });
-    } else {
-      res.status(200).send({
-        success: true,
-        data: result
-      });
-    }
-    
-  } catch (error) {
-    res.status(503).send({
-      success: false,
-      message: "Server error"
-    });
-  }
-})
-
+*/
 
 // add commission
 route.post("/generate-commission",async(req,res)=>{
-  const { willAmbID, userID , commissionEarned, commissionBalance, productName, userName} = req.body
+  const { willAmbID, userID , commissionEarned, commissionBalance, productName, userName,salesID} = req.body
  
   const newCommission = new Commission({
   
@@ -546,7 +642,8 @@ route.post("/generate-commission",async(req,res)=>{
     commissionStatus: "Unpaid",
     balanceReq:"",
     productName: productName,
-    userName: userName
+    userName: userName,
+    salesID: salesID
     
   })
   newCommission
@@ -582,6 +679,194 @@ route.get("/commission/:id", async(req,res)=>{
       res.status(200).send({
         success: true,
         data: products
+      });
+    }
+  } catch (err) {
+    res.status(503).send({
+      success: false,
+      message: "Server error"
+    });
+  }
+
+}
+)
+
+// generate balance req
+
+route.post("/generate-balancereq",async(req,res)=>{
+  const { userName, bankName , bankAccountName, commissionBalance, bankAccNo} = req.body
+ 
+  const newbalanceReq = new BalanceReq({
+  
+    reqDate: moment().format('LL'),
+    userName: userName,
+    userID: userID,
+    bankName: bankName,
+    bankAccountName: bankAccountName,
+    bankAccNo: bankAccNo,
+    commissionBalance: commissionBalance,
+    reqStatus:"Unpaid"
+   
+    
+  })
+  newbalanceReq
+  .save()
+  .then(response => {
+    res.status(200).send({
+      success: true,
+      message: "Balance Req Added",
+      data: response
+    });
+  })
+  .catch(err => {
+    res.status(400).send({
+      success: false,
+      message: "Error: failed",
+      Error: err
+    });
+  });  
+})
+
+
+//update invoice status
+route.patch("/invoice/:id",async(req,res)=>{
+  const {id} = req.params
+  var {paymentID} = req.body;
+  try {
+    const result = await transactions.updateOne({
+      invoiceID: id
+    }, {$set:{
+      paymentNumber: paymentID,
+      
+    }})
+    if (result.length === 0) {
+      res.status(200).send({
+        success: true,
+        data: result,
+        message: "No Invoice Updated"
+      });
+    } else {
+      res.status(200).send({
+        success: true,
+        data: result
+      });
+    }
+    
+  } catch (error) {
+    res.status(503).send({
+      success: false,
+      message: "Server error"
+    });
+  }
+})
+
+// update user
+route.patch("/editprofile/:id",async(req,res)=>{
+  const {id} = req.params
+  
+  var update = req.body;
+  console.log(update)
+  try {
+    const result = await User.updateOne({
+      _id: id
+    }, {$set:update})
+    if (result.length === 0) {
+      res.status(200).send({
+        success: true,
+        data: result,
+        message: "No Profile Updated"
+      });
+    } else {
+      res.status(200).send({
+        success: true,
+        data: result
+      });
+    }
+    
+  } catch (error) {
+    res.status(503).send({
+      success: false,
+      message: "Server error"
+    });
+  }
+})
+
+// add sales
+route.post("/sales", async(req,res)=>{
+  const{product, amount, transactionID} = req.body;
+  const code = voucher_codes.generate({
+    length: 5,
+    count: 1,
+    charset: "0123456789"
+  });
+  const newSales = new Sales({
+    
+    salesID: code[0],
+    date:moment().format('LL') ,
+    productName: product,
+    amount,
+    transactionID
+  })
+  newSales
+  .save()
+  .then(response => {
+    res.status(200).send({
+      success: true,
+      message: "Sale Added",
+      data: response
+    });
+  })
+  .catch(err => {
+    res.status(400).send({
+      success: false,
+      message: "Sale failed",
+      Error: err
+    });
+  });
+
+})
+
+// get discounts listing
+route.get("/discounts", async(req,res)=>{
+  try {
+    const discounts = await Discount.find();
+    if (discounts.length === 0) {
+      res.status(200).send({
+        success: true,
+        data: discounts,
+        message: "No discounts to show"
+      });
+    } else {
+      res.status(200).send({
+        success: true,
+        data: discounts
+      });
+    }
+  } catch (err) {
+    res.status(503).send({
+      success: false,
+      message: "Server error"
+    });
+  }
+
+}
+)
+
+// get all sales
+
+route.get("/sales", async(req,res)=>{
+  try {
+    const sales = await Sales.find();
+    if (sales.length === 0) {
+      res.status(200).send({
+        success: true,
+        data: sales,
+        message: "No sales to show"
+      });
+    } else {
+      res.status(200).send({
+        success: true,
+        data: sales
       });
     }
   } catch (err) {
