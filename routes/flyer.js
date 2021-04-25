@@ -8,6 +8,7 @@ var fs = require('fs');
 var cloudinary = require('cloudinary').v2;
 var path = require('path');
 const { PDFNet } = require('@pdftron/pdfnet-node'); 
+var Jimp = require("jimp");
 
 cloudinary.config({ 
     cloud_name: 'dexn8tnt9', 
@@ -42,19 +43,39 @@ route.post("/uploadFlyer", upload.single('img'),  async (req, res) => {
     const { name , description, type } = req.body;
   const path = req.file && req.file.path
   const uniqueFileName = name
-  try{
+  console.log(path)
+  var imageCaption = 'Image caption';
+var loadedImage;
+
+Jimp.read(path)
+    .then(function (image) {
+        loadedImage = image;
+        return Jimp.loadFont(Jimp.FONT_SANS_16_BLACK);
+    })
+    .then(function (font) {
+        loadedImage.print(font, 10, 10, imageCaption)
+                   .write(path);
+                   
+    })
+    .catch(function (err) {
+        console.error(err);
+    });
+
+try{
+  
     const image = await cloudinary.uploader.upload(path, {
       public_id: `flyer/${uniqueFileName}`,
       tags: "flyer",
     })
-    fs.unlinkSync(path);
+   // fs.unlinkSync(path);
     if(image){
       const newFlyer = new Flyer({
         _id: new mongoose.Types.ObjectId(),
         name,
         description,
         img: image && image.url,  
-        type
+        type,
+        emailedTo:""
       });
       const response = await newFlyer.save();
       if(response){
@@ -135,69 +156,84 @@ route.delete("/delete/:id", async(req,res)=>{
 })
 
 
-// covert to pdf 
-route.get("/convert", (req,res)=>{
-  const {filename} = req.query
-  console.log(filename)
-  const inputPath = path.resolve(__dirname,`./files/${filename}`);
-  const outputPath = path.resolve(__dirname,`./files/${filename}.pdf`);
 
-  const convertToPDF= async()=>{
-    const pdfdoc = await PDFNet.PDFDoc.create();
-    await pdfdoc.initSecurityHandler();
-    await PDFNet.Convert.toPdf(pdfdoc, inputPath)
-    pdfdoc.save(outputPath,PDFNet.SDFDoc.SaveOptions.e_linearized)
- 
-  }
 
-  PDFNet.runWithCleanup(convertToPDF).then(()=>{
-    fs.readFile(outputPath, (err,data)=>{
-      if(err){
-        res.statusCode = 500;
-        res.end(err)
-      }
-      else{
-        res.setHeader('ContentType','application/pdf')
-        res.end(data)
-      }
+// test jimp module
+route.get("/test", async(req,res)=>{
+  var fileName = './uploads/audio.png';
+var imageCaption = 'Image caption';
+var loadedImage;
+
+Jimp.read(fileName)
+    .then(function (image) {
+        loadedImage = image;
+        return Jimp.loadFont(Jimp.FONT_SANS_16_BLACK);
     })
+    .then(function (font) {
+        loadedImage.print(font, 10, 10, imageCaption)
+                   .write(fileName);
 
-  }).catch(err=>{
-    res.statusCode=400;
-    res.end(err)
-  })
+    })
+    .catch(function (err) {
+        console.error(err);
+    });
 })
 
-route.get("/generate",(req,res)=>{
-  const inputPath = path.resolve(__dirname,"./files/Flyer.pdf");
-  const outputPath = path.resolve(__dirname,"./files/new.pdf");
-  const replaceText = async()=>{
-    const pdfdoc = await PDFNet.PDFDoc.createFromFilePath(inputPath);
-    await pdfdoc.initSecurityHandler();
-    const replacer = await PDFNet.ContentReplacer.create()
-    const page= await pdfdoc.getPage(1);
-    await replacer.addString('code','12345');
 
-    await replacer.process(page);
-    return pdfdoc.save(outputPath,PDFNet.SDFDoc.SaveOptions.e_linearized);
-  }
-  PDFNet.runWithCleanup(replaceText).then(()=>{
-    fs.readFile(outputPath,(err,data)=>{
-   if (err){
-     res.statusCode=500;
-     res.end(err)
-   }
-   else{
-     res.setHeader('ContentType','application/pdf')
-     res.end(data)
-   }
+// email flyer
+// email voucher
+route.patch("/flyeremail/:id", async(req,res)=>{
+  const {id} = req.params
+  const {email} = req.body
+  try {
+    const result = await Flyer.updateOne({
+     _id: id,
+    },{$push:{
+      emailTo: email
       
-    }).catch(err=>{
-      res.statusCode=400;
-      res.end(err)
-    })
-  })
-
+    }})
+    if (result.length === 0) {
+      res.status(200).send({
+        success: true,
+        data: result,
+        message: "Flyer updated"
+      });
+    } else {
+      res.status(200).send({
+        success: true,
+        data: result
+      });
+      var transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: 'fa17-bcs-081@cuilahore.edu.pk',
+          pass: 'FA17-BCS-081'
+        }
+      });
+      let mailOption={
+        from: 'fa17-bcs-081@cuilahore.edu.pk',
+        to: email,
+        subject: 'form files',
+        text:"An Email from will project"
+    
+    }
+      //send email
+transporter.sendMail(mailOption,function(err,res){
+  if(err){
+      console.log("error ",err)
+  }
+  else{
+      console.log("Email sent")
+  }
 })
 
+    }
+    
+  } catch (error) {
+    res.status(503).send({
+      success: false,
+      message: "Server error"
+    });
+  }
+})
 module.exports = route;

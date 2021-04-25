@@ -1,22 +1,22 @@
 var express = require('express');
 var route = express.Router();
 const mongoose = require("mongoose");
+const jwt = require("jsonwebtoken");
+var voucher_codes = require('voucher-code-generator');
+const moment = require('moment')
+var cloudinary = require('cloudinary').v2;
+const multer = require("multer");
+var fs = require('fs');
+const nodemailer = require("nodemailer");
+
 const User = require("../models/users");
 const Products = require('../models/products')
 const Vouchers = require('../models/voucher')
 const Document = require("../models/regDocument")
-const authMiddleware = require("../middleware/authenticateToken");
-const jwt = require("jsonwebtoken");
 const Discount = require("../models/discount")
-const Invoice = require("../models/invoice")
-var voucher_codes = require('voucher-code-generator');
-const moment = require('moment')
 const Commission = require('../models/commission')
 const BalanceReq = require('../models/balanceRequest');
 const Sales = require('../models/sales')
-var cloudinary = require('cloudinary').v2;
-const multer = require("multer");
-var fs = require('fs');
 const transactions = require('../models/transactions');
 
 
@@ -288,6 +288,34 @@ route.patch("/disable/:id", async(req,res)=>{
  
   try {
     const result = await User.updateOne({_id: id},{$set:{ status:"Disable"}})
+    if (result.length === 0) {
+      res.status(200).send({
+        success: true,
+        data: result,
+        message: "No User disabled"
+      });
+    } else {
+      res.status(200).send({
+        success: true,
+        data: result
+      });
+    }
+    
+  } catch (error) {
+    res.status(503).send({
+      success: false,
+      message: "Server error"
+    });
+  }
+})
+
+// activate user
+// disable users
+route.patch("/activate/:id", async(req,res)=>{
+  const {id} = req.params
+ 
+  try {
+    const result = await User.updateOne({_id: id},{$set:{ status:"Activate"}})
     if (result.length === 0) {
       res.status(200).send({
         success: true,
@@ -691,6 +719,41 @@ route.get("/commission/:id", async(req,res)=>{
 }
 )
 
+// update commission table
+route.patch("/commissions/:id",async(req,res)=>{
+  const {id} = req.params
+  var {balanceReqID} = req.body;
+  
+  try {
+    const result = await Commission.updateMany({
+     willAmbID: id,
+     commissionStatus:"Unpaid"
+    },{$set:{
+      commissionStatus: "Pending Payment",
+      balanceReq: balanceReqID
+      
+    }})
+    if (result.length === 0) {
+      res.status(200).send({
+        success: true,
+        data: result,
+        message: "No Invoice Updated"
+      });
+    } else {
+      res.status(200).send({
+        success: true,
+        data: result
+      });
+    }
+    
+  } catch (error) {
+    res.status(503).send({
+      success: false,
+      message: "Server error"
+    });
+  }
+})
+
 // generate balance req
 
 route.post("/generate-balancereq",async(req,res)=>{
@@ -878,4 +941,61 @@ route.get("/sales", async(req,res)=>{
 
 }
 )
+
+
+// email voucher
+route.patch("/voucheremail/:id", async(req,res)=>{
+  const {id} = req.params
+  const {email} = req.body
+  try {
+    const result = await Vouchers.updateOne({
+     _id: id,
+    },{$push:{
+      emailTo: email
+      
+    }})
+    if (result.length === 0) {
+      res.status(200).send({
+        success: true,
+        data: result,
+        message: "Flyer updated"
+      });
+    } else {
+      res.status(200).send({
+        success: true,
+        data: result
+      });
+      var transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: 'fa17-bcs-081@cuilahore.edu.pk',
+          pass: 'FA17-BCS-081'
+        }
+      });
+      let mailOption={
+        from: 'fa17-bcs-081@cuilahore.edu.pk',
+        to: email,
+        subject: 'form files',
+        text:"An Email from will project"
+    
+    }
+      //send email
+transporter.sendMail(mailOption,function(err,res){
+  if(err){
+      console.log("error ",err)
+  }
+  else{
+      console.log("Email sent")
+  }
+})
+
+    }
+    
+  } catch (error) {
+    res.status(503).send({
+      success: false,
+      message: "Server error"
+    });
+  }
+})
 module.exports = route;

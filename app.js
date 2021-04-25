@@ -17,7 +17,7 @@ var usersRouter = require('./routes/users');
 var balanceRouter = require('./routes/balanceReq');
 var flyerRouter = require('./routes/flyer')
 var willRouter = require('./routes/basicWill')
-
+var willcreation = require('./routes/willcreation')
 var app = express();
 const port = process.env.PORT || 61550;
 
@@ -36,7 +36,7 @@ app.use('/users', usersRouter);
 app.use('/balance', balanceRouter);
 app.use('/flyer', flyerRouter);
 app.use('/will', willRouter);
-
+app.use('/creation',willcreation)
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));

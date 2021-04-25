@@ -266,6 +266,37 @@ catch(error){
  
 })
 
+// update search
+route.patch("/updatesearch/:id", async(req,res)=>{
+  var update = req.body;
+  const {id} = req.params
+  
+  try {
+    const result = await Search.updateOne({
+      _id: id
+    }, {$set:update})
+    if (result.length === 0) {
+      res.status(200).send({
+        success: true,
+        data: result,
+        message: "No Search Res Updated"
+      });
+    } else {
+      res.status(200).send({
+        success: true,
+        data: result
+      });
+    }
+    
+  } catch (error) {
+    res.status(503).send({
+      success: false,
+      message: "Server error"
+    });
+  }
+})
+
+
 /* GET  registered documents listing against each will */
 route.get("/registeredDocuments/:id", async (req, res) => {
   const {id} = req.params
