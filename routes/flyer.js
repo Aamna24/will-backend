@@ -236,4 +236,36 @@ transporter.sendMail(mailOption,function(err,res){
     });
   }
 })
+
+// edit flyer
+// update user
+route.patch("/editflyer/:id",async(req,res)=>{
+  const {id} = req.params
+  
+  var update = req.body;
+  try {
+    const result = await Flyer.updateOne({
+      _id: id
+    }, {$set:update})
+    if (result.length === 0) {
+      res.status(200).send({
+        success: true,
+        data: result,
+        message: "No Flyer Updated"
+      });
+    } else {
+      res.status(200).send({
+        success: true,
+        data: result
+      });
+    }
+    
+  } catch (error) {
+    res.status(503).send({
+      success: false,
+      message: "Server error"
+    });
+  }
+})
+
 module.exports = route;
