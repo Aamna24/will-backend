@@ -222,7 +222,7 @@ route.post("/register-document", async(req,res)=>{
 
 // setup discount
 route.post("/setup-discount", async(req,res)=>{
-  const{type, fromNoQty, toNoQty, discountPercentage,commissionPercentage,amount} = req.body;
+  const{type, fromNoQty, toNoQty, discountPercentage,commissionPercentage,amount,updatedBy} = req.body;
   const code = voucher_codes.generate({
     length: 8,
     count: 1,
@@ -236,7 +236,9 @@ route.post("/setup-discount", async(req,res)=>{
     discountPercentage,
     commissionPercentage,
     discountCode: code[0],
-    amount
+    amount,
+    updatedBy,
+    date: moment().format('LL')
   })
   newDiscount
   .save()
@@ -310,7 +312,6 @@ route.patch("/disable/:id", async(req,res)=>{
 })
 
 // activate user
-// disable users
 route.patch("/activate/:id", async(req,res)=>{
   const {id} = req.params
  
@@ -501,11 +502,12 @@ route.get("/transactionlist", async(req,res)=>{
 
 // add products
 route.post("/addproduct",async(req,res)=>{
-  const {name, basePrice} = req.body
+  const {name, basePrice, updatedBy} = req.body
 
 const newProduct = new Products({
   name,
   basePrice,
+  updatedBy
   
 })
 newProduct
@@ -529,7 +531,6 @@ newProduct
 })
 
 // update pricing of products
-// update will reg after payment 
 route.patch("/updateproduct", async(req,res)=>{
   var {product, amount} = req.body;
   console.log(req.body)
@@ -998,4 +999,64 @@ transporter.sendMail(mailOption,function(err,res){
     });
   }
 })
+
+
+// delete discounts
+route.delete("/delete-discount/:id", async(req,res)=>{
+  const {id} = req.params
+  try {
+    const result = await Discount.deleteOne({_id: id});
+    if (result.length === 0) {
+      res.status(200).send({
+        success: true,
+        data: result,
+        message: "No Discount Deleted "
+      });
+    } else {
+      res.status(200).send({
+        success: true,
+        data: result
+      });
+    }
+   
+  } catch (err) {
+    res.status(503).send({
+      success: false,
+      message: "Server error"
+    });
+  }
+  
+})
+
+// edit discounts
+
+route.patch("/editdiscount/:code",async(req,res)=>{
+  const {code} = req.params
+  
+  var update = req.body;
+  try {
+    const result = await Discount.updateOne({
+      discountCode: code
+    }, {$set:update})
+    if (result.length === 0) {
+      res.status(200).send({
+        success: true,
+        data: result,
+        message: "No Discount Updated"
+      });
+    } else {
+      res.status(200).send({
+        success: true,
+        data: result
+      });
+    }
+    
+  } catch (error) {
+    res.status(503).send({
+      success: false,
+      message: "Server error"
+    });
+  }
+})
+
 module.exports = route;

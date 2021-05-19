@@ -238,7 +238,6 @@ transporter.sendMail(mailOption,function(err,res){
 })
 
 // edit flyer
-// update user
 route.patch("/editflyer/:id",async(req,res)=>{
   const {id} = req.params
   

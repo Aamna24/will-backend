@@ -7,7 +7,7 @@ const user = mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   selfie :{type: String, required: true},
-  phoneNo:{type:String, required: true},
+  phoneNo:{type:String, required: true, unique: true},
   add1:{type:String, required: true},
   add2:{type:String},
   town:{type:String, required: true},

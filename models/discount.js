@@ -9,7 +9,9 @@ const discount = mongoose.Schema({
     discountPercentage:{type: Number},
     commissionPercentage:{type:Number},
     discountCode:{type:String, required: true},
-    amount:{type:Number}
+    amount:{type:Number},
+    updatedBy:{type:String},
+    date:{type:String}
    
    
   });

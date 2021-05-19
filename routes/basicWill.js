@@ -649,4 +649,31 @@ route.patch("/updateprobwill/:id", async(req,res)=>{
     });
   }
 })
+
+
+// find will by will id
+route.get("/find/:id", async (req, res) => {
+  const {id} = req.params
+  try {
+    const willData = await BasicWill.find({willRefNo: id});
+    if (willData.length === 0) {
+      res.status(200).send({
+        success: true,
+        data: willData,
+        message: "No Will"
+      });
+    } else {
+      res.status(200).send({
+        success: true,
+        data: willData
+      });
+    }
+  } catch (err) {
+    res.status(503).send({
+      success: false,
+      message: "Server error"
+    });
+  }
+});
+
 module.exports = route;

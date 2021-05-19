@@ -22,7 +22,8 @@ route.post("/generateBalance", async (req, res) => {
       bankAccNo,
       bankAccountName,
       bankName,
-      commissionBalance
+      commissionBalance,
+      refNo: ""
   
     });
   
@@ -106,18 +107,18 @@ route.patch("/commissions/:id",async(req,res)=>{
 })
 
 // updte balance req id status
-// update commission table
+
 route.patch("/balance/:id",async(req,res)=>{
   const {id} = req.params
   //var {balanceReqID} = req.body;
-  
+  const {refNo} = req.body
   try {
     const result = await BalanceReq.updateMany({
      balanceReqID: id,
      reqStatus:"Pending"
     },{$set:{
       reqStatus: "Paid",
-      
+      refNo
       
     }})
     if (result.length === 0) {

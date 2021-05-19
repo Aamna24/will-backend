@@ -9,7 +9,8 @@ const balanceRequest = mongoose.Schema({
     bankName:{type:String},
     bankAccountName:{type:String},
     bankAccNo:{type:String},
-    commissionBalance:{type:Number}
+    commissionBalance:{type:Number},
+    refNo:{type:String}
    
    
    
