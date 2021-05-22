@@ -8,6 +8,7 @@ const Sales = mongoose.Schema({
     date:{type:String},
     amount:{type: Number},
     transactionID:{type:Number},
+    promoCode:{Type:String}
     
     
    

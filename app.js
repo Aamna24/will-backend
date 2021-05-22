@@ -36,7 +36,7 @@ app.use('/users', usersRouter);
 app.use('/balance', balanceRouter);
 app.use('/flyer', flyerRouter);
 app.use('/will', willRouter);
-app.use('/creation',willcreation)
+app.use('/willcreation',willcreation)
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));

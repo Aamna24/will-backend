@@ -474,7 +474,6 @@ route.get("/voucherslist", async(req,res)=>{
 
 
 // get b2b voucher transactions
-// get vouchers listing
 route.get("/transactionlist", async(req,res)=>{
   try {
     const transaction = await transactions.find();
@@ -857,7 +856,7 @@ route.patch("/editprofile/:id",async(req,res)=>{
 
 // add sales
 route.post("/sales", async(req,res)=>{
-  const{product, amount, transactionID} = req.body;
+  const{product, amount, transactionID, promoCode} = req.body;
   const code = voucher_codes.generate({
     length: 5,
     count: 1,
@@ -869,7 +868,8 @@ route.post("/sales", async(req,res)=>{
     date:moment().format('LL') ,
     productName: product,
     amount,
-    transactionID
+    transactionID,
+    promoCode
   })
   newSales
   .save()

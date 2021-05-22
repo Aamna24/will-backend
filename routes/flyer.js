@@ -40,7 +40,7 @@ const storage = multer.diskStorage({
   const upload = multer({ storage: storage, fileFilter: fileFilter });
 // upload flyer
 route.post("/uploadFlyer", upload.single('img'),  async (req, res) => {
-    const { name , description, type } = req.body;
+    const { name , description, type, uploadedBy } = req.body;
   const path = req.file && req.file.path
   const uniqueFileName = name
   console.log(path)
@@ -75,7 +75,8 @@ try{
         description,
         img: image && image.url,  
         type,
-        emailedTo:""
+        emailedTo:"",
+        uploadedBy
       });
       const response = await newFlyer.save();
       if(response){

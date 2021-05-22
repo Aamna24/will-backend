@@ -6,7 +6,8 @@ const flyer = mongoose.Schema({
     img:{type: String},
     description: {type:String, required: true},
     type:{type:String},
-    emailTo:{type:String}
+    emailTo:{type:String},
+    uploadedBy:{type:String}
    
   });
   
