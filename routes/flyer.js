@@ -7,9 +7,8 @@ const multer = require("multer");
 var fs = require('fs');
 var cloudinary = require('cloudinary').v2;
 var path = require('path');
-const { PDFNet } = require('@pdftron/pdfnet-node'); 
 var Jimp = require("jimp");
-
+var moment = require('moment')
 cloudinary.config({ 
     cloud_name: 'dexn8tnt9', 
     api_key: '828443825275634', 
@@ -76,7 +75,8 @@ try{
         img: image && image.url,  
         type,
         emailedTo:"",
-        uploadedBy
+        uploadedBy,
+        createdOn: moment().format('LL')
       });
       const response = await newFlyer.save();
       if(response){

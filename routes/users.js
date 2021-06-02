@@ -357,7 +357,8 @@ const newVoucher = new Vouchers({
   paymentNumber:paymentNumber,
   invoiceID: invoiceID,
   b2bClient: b2bClient,
-  emailTo:""
+  emailTo:"",
+  
 
 })
 newVoucher
