@@ -10,7 +10,7 @@ const Voucher = mongoose.Schema({
     status:{type:String, required: true},
     processedBy:{type:String},
     emailTo:[{type:String}],
-    paymentNumber:{type:String}
+    paymentNumber:{type:String},
     
     
    

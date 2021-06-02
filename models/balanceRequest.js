@@ -5,12 +5,15 @@ const balanceRequest = mongoose.Schema({
   balanceReqID:{type:String},
     reqDate: { type: String, required: true },
     reqStatus: {type:String, required: true},
-    userID:{type:String},
+    userName:{type:String},
+    userType:{type:String},
     bankName:{type:String},
     bankAccountName:{type:String},
     bankAccNo:{type:String},
     commissionBalance:{type:Number},
-    refNo:{type:String}
+    refNo:{type:String},
+    clearedBy:{type:String},
+    dateOfClearance:{type:String},
    
    
    
